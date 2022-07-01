@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { updateDoc, doc, deleteDoc } from "firebase/firestore";
 import pin from "../assests/pin.png";
 
@@ -11,6 +11,9 @@ const Modal = ({ closeModal, notes, status, setNotes, db, reset }) => {
   });
 
   const [Loading, setLoading] = useState(true);
+  const [undo, setUndo] = useState(false);
+  const undoRef = useRef(undo);
+  // const descriptionref = useRef(note.description);
 
   useEffect(() => {
     if (!Loading) {
@@ -27,7 +30,7 @@ const Modal = ({ closeModal, notes, status, setNotes, db, reset }) => {
       pinned: notes[status.index].pinned,
       id: notes[status.index].id,
     });
-    window.addEventListener("keydown", escapeModal);
+    document.addEventListener("keydown", escapeModal);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -41,8 +44,16 @@ const Modal = ({ closeModal, notes, status, setNotes, db, reset }) => {
       e.target.style.height = "inherit";
       e.target.style.height = `${e.target.scrollHeight}px`;
     } else if (id === "pin") {
-      setNote((prevcheck) => ({ ...note, pinned: !prevcheck.pinned }));
-      setLoading(false);
+      if (!!note.description.length) {
+        setNote((prevcheck) => ({ ...note, pinned: !prevcheck.pinned }));
+        setLoading(false);
+      } else {
+        document.querySelector(".errormodal").classList.toggle("hiddenmodal");
+        setTimeout(() => {
+          document.querySelector(".errormodal").classList.toggle("hiddenmodal");
+        }, 1000);
+      }
+
       // closeModal();
     }
   };
@@ -80,19 +91,35 @@ const Modal = ({ closeModal, notes, status, setNotes, db, reset }) => {
   };
 
   const deleteNote = async (e) => {
-    e.preventDefault();
     const userDoc = doc(db, "notes", note.id);
-    await deleteDoc(userDoc, note);
     reset();
     closeModal();
-
+    setUndo(false);
+    await deleteDoc(userDoc, note);
     // let ind = parseInt(status.index);
     // const newnote = notes.filter((n, index) => index !== ind);
     // setNotes(newnote);
   };
 
+  useEffect(() => {
+    undoRef.current = undo;
+  }, [undo]);
+
+  const handleDelete = (e) => {
+    e.preventDefault();
+    setUndo(true);
+    setTimeout(() => {
+      if (undoRef.current) {
+        deleteNote();
+      } else {
+        setUndo(false);
+      }
+    }, 2500);
+  };
+
   const escapeModal = (e) => {
     if (e.key === "Escape") {
+      console.log("closed");
       closeModal();
     }
   };
@@ -106,7 +133,7 @@ const Modal = ({ closeModal, notes, status, setNotes, db, reset }) => {
   return (
     <div className="overlay">
       <form className="content">
-        {closeicon()}
+        {!!note.description.length && closeicon()}
         <button className="pin" onClick={handleNoteChange} id="pin">
           <img
             id="pin"
@@ -129,9 +156,15 @@ const Modal = ({ closeModal, notes, status, setNotes, db, reset }) => {
           <button type="submit" onClick={updateNote} className="update">
             Update
           </button>
-          <button type="submit" onClick={deleteNote} className="delete">
-            Delete
-          </button>
+          {!undo ? (
+            <button type="submit" onClick={handleDelete} className="delete">
+              Delete
+            </button>
+          ) : (
+            <button className="undo" onClick={() => setUndo(false)}>
+              Undo
+            </button>
+          )}
         </div>
         <div className="errormodal hiddenmodal">
           Description cannot be empty

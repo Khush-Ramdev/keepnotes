@@ -32,6 +32,12 @@
   resize: none;
 }
 
+#description:focus,
+#title:focus {
+  background-color: aliceblue;
+  border: none;
+}
+
 #submit {
   border: none;
   font-size: 1.2rem;
@@ -47,6 +53,11 @@
 
 #submit:hover {
   background: whitesmoke;
+}
+
+#submit:focus {
+  background-color: black;
+  color: white;
 }
 
 .error {
@@ -67,5 +78,9 @@
 @media (max-width: 500px) {
   .newnote {
     width: 80%;
+  }
+
+  .error {
+    width: 70%;
   }
 }

@@ -19,6 +19,13 @@
   line-break: strict;
 }
 
+.note:hover,
+.note:active {
+  background-color: black;
+  color: white;
+  cursor: pointer;
+}
+
 .notetitle {
   font-size: 1.5rem;
   font-weight: bold;
